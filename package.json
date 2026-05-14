@@ -22,9 +22,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
+    "bullmq": "^5.76.8",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
+    "ioredis": "^5.10.1",
     "openai": "^6.37.0"
   }
 }

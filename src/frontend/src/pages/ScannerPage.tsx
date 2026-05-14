@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-
+import { supabase } from "../lib/supabase";
 // ── Types ────────────────────────────────────────────────────────────────────
 type Severity = "Critical" | "High" | "Medium" | "Low";
 type ScanStatus = "Complete" | "Running";
@@ -158,7 +158,7 @@ function VulnCard({ vuln, index }: { vuln: Vulnerability; index: number }) {
   );
 }
 
-function ExpandedDetails({ scanId, vulnerabilities }: { scanId: string; vulnerabilities: Vulnerability[] }) {
+function ExpandedDetails({ scanId, vulnerabilities, logs = [] }: { scanId: string; vulnerabilities: Vulnerability[], logs?: any[] }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -167,7 +167,30 @@ function ExpandedDetails({ scanId, vulnerabilities }: { scanId: string; vulnerab
       transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       className="overflow-hidden"
     >
-      <div className="px-4 pb-4 pt-2">
+      <div className="px-4 pb-4 pt-2 flex flex-col gap-4">
+        {/* Logs Terminal */}
+        <div className="rounded-lg border border-white/5 bg-black/60 p-4 font-mono text-xs overflow-hidden h-48 flex flex-col">
+          <div className="flex items-center gap-2 mb-2 text-muted-foreground border-b border-white/10 pb-2">
+             <div className="w-2 h-2 rounded-full bg-red-500"></div>
+             <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+             <div className="w-2 h-2 rounded-full bg-green-500"></div>
+             <span className="ml-2">Live Scan Logs</span>
+          </div>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-1">
+            {logs.length === 0 ? (
+              <span className="text-muted-foreground">Waiting for logs...</span>
+            ) : (
+              logs.map((log, i) => (
+                <div key={i} className="flex gap-3">
+                  <span className="text-white/40 shrink-0">[{new Date(log.created_at).toLocaleTimeString()}]</span>
+                  <span className={log.level === 'error' ? 'text-red-400' : 'text-cyan-400'}>{log.message}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Vulnerabilities */}
         <div className="rounded-lg border border-white/5 bg-black/30 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Info className="h-4 w-4 text-cyan-400" />
@@ -202,6 +225,7 @@ function ScanRow({
   isExpanded: boolean;
   onToggle: () => void;
   vulnerabilities: Vulnerability[];
+  logs?: any[];
 }) {
   const progress = scan.progress;
 
@@ -274,7 +298,7 @@ function ScanRow({
         <tr>
           <td colSpan={6} className="p-0">
             <AnimatePresence>
-              <ExpandedDetails scanId={scan.id} vulnerabilities={vulnerabilities} />
+              <ExpandedDetails scanId={scan.id} vulnerabilities={vulnerabilities} logs={logs} />
             </AnimatePresence>
           </td>
         </tr>
@@ -433,6 +457,7 @@ export default function ScannerPage() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [scans, setScans] = useState<ScanEntry[]>([]);
   const [vulnerabilities, setVulnerabilities] = useState<Record<string, Vulnerability[]>>({});
+  const [logs, setLogs] = useState<Record<string, any[]>>({});
 
   const fetchScans = async () => {
     try {
@@ -449,6 +474,9 @@ export default function ScannerPage() {
       const res = await fetch(`http://localhost:3001/api/scans/${id}`);
       const data = await res.json();
       setVulnerabilities(prev => ({ ...prev, [id]: data.vulnerabilities }));
+
+      const { data: logData } = await supabase.from('scan_logs').select('*').eq('scan_id', id).order('created_at', { ascending: true });
+      if (logData) setLogs(prev => ({ ...prev, [id]: logData }));
     } catch (err) {
       console.error('Failed to fetch scan details', err);
     }
@@ -456,8 +484,28 @@ export default function ScannerPage() {
 
   useEffect(() => {
     fetchScans();
-    const interval = setInterval(fetchScans, 3000);
-    return () => clearInterval(interval);
+
+    const scanSub = supabase
+      .channel('scans-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scans' }, () => {
+        fetchScans();
+      })
+      .subscribe();
+
+    const logSub = supabase
+      .channel('logs-channel')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scan_logs' }, payload => {
+        setLogs(prev => ({
+          ...prev,
+          [payload.new.scan_id]: [...(prev[payload.new.scan_id] || []), payload.new]
+        }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(scanSub);
+      supabase.removeChannel(logSub);
+    };
   }, []);
 
   const tabCounts = {
@@ -644,6 +692,7 @@ export default function ScannerPage() {
                           isExpanded={expandedRow === scan.id}
                           onToggle={() => toggleRow(scan.id)}
                           vulnerabilities={vulnerabilities[scan.id] || []}
+                          logs={logs[scan.id] || []}
                         />
                       ))
                     )}

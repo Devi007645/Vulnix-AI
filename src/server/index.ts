@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import scannerRouter from './services/vulnerability-scanner/router.js';
+import { startScanWorker } from './workers/scanWorker.js';
 
 dotenv.config();
 
@@ -91,6 +92,11 @@ app.post('/api/chat', async (req, res) => {
     res.status(500).json({ error: error.message || 'Error calling OpenAI' });
   }
 });
+
+// Start the background worker if requested
+if (process.env.RUN_WORKER === 'true') {
+  startScanWorker();
+}
 
 app.listen(port, () => {
   console.log(`Vulnix AI Backend listening at http://localhost:${port}`);
