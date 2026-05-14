@@ -29,12 +29,12 @@ type Severity = "Critical" | "High" | "Medium" | "Low";
 type ScanStatus = "Complete" | "Running";
 
 interface ScanEntry {
-  id: number;
+  id: string;
   target: string;
   status: ScanStatus;
   severity: Severity;
-  vulnCount: number;
-  date: string;
+  vuln_count: number;
+  created_at: string;
   progress?: number;
 }
 
@@ -48,91 +48,9 @@ interface Vulnerability {
 }
 
 // ── Mock data ────────────────────────────────────────────────────────────────
-const MOCK_SCANS: ScanEntry[] = [
-  {
-    id: 1,
-    target: "api.nexacorp.com",
-    status: "Complete",
-    severity: "Critical",
-    vulnCount: 12,
-    date: "2 hours ago",
-  },
-  {
-    id: 2,
-    target: "app.helixsec.io",
-    status: "Running",
-    severity: "High",
-    vulnCount: 3,
-    date: "Running",
-    progress: 67,
-  },
-  {
-    id: 3,
-    target: "dashboard.orbita.co",
-    status: "Complete",
-    severity: "Medium",
-    vulnCount: 5,
-    date: "Yesterday",
-  },
-  {
-    id: 4,
-    target: "api.ciphertech.io",
-    status: "Complete",
-    severity: "Critical",
-    vulnCount: 18,
-    date: "2 days ago",
-  },
-  {
-    id: 5,
-    target: "staging.vaultlayer.com",
-    status: "Running",
-    severity: "Medium",
-    vulnCount: 2,
-    date: "Running",
-    progress: 23,
-  },
-  {
-    id: 6,
-    target: "cdn.nexacorp.com",
-    status: "Complete",
-    severity: "Low",
-    vulnCount: 1,
-    date: "3 days ago",
-  },
-];
+// Mock data removed in favor of API calls
 
-const MOCK_VULNS: Vulnerability[] = [
-  {
-    name: "SQL Injection in /api/users endpoint",
-    cvss: 9.1,
-    description:
-      "Input parameters not sanitized. Attacker can extract or modify database contents.",
-    remediation:
-      "Use parameterized queries and prepared statements for all database interactions.",
-    confidence: 98,
-    severity: "Critical",
-  },
-  {
-    name: "Outdated OpenSSL 1.0.2",
-    cvss: 7.5,
-    description:
-      "Running a version of OpenSSL with multiple known CVEs including Heartbleed variants.",
-    remediation:
-      "Upgrade to OpenSSL 3.1+ immediately and rotate all TLS certificates.",
-    confidence: 95,
-    severity: "High",
-  },
-  {
-    name: "Missing X-Frame-Options header",
-    cvss: 4.3,
-    description:
-      "The application can be embedded in an iframe, enabling clickjacking attacks.",
-    remediation:
-      "Add X-Frame-Options: DENY to all HTTP responses or use CSP frame-ancestors.",
-    confidence: 92,
-    severity: "Medium",
-  },
-];
+// Mock vulnerabilities removed in favor of API calls
 
 const SCAN_TYPES = [
   "OWASP Top 10",
@@ -240,7 +158,7 @@ function VulnCard({ vuln, index }: { vuln: Vulnerability; index: number }) {
   );
 }
 
-function ExpandedDetails({ scanId }: { scanId: number }) {
+function ExpandedDetails({ scanId, vulnerabilities }: { scanId: string; vulnerabilities: Vulnerability[] }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -258,9 +176,13 @@ function ExpandedDetails({ scanId }: { scanId: number }) {
             </span>
           </div>
           <div className="flex flex-col gap-3">
-            {MOCK_VULNS.map((v, i) => (
-              <VulnCard key={v.name} vuln={v} index={i} />
-            ))}
+            {vulnerabilities.length > 0 ? (
+              vulnerabilities.map((v, i) => (
+                <VulnCard key={v.name} vuln={v} index={i} />
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground py-2">No vulnerabilities found yet.</p>
+            )}
           </div>
         </div>
       </div>
@@ -279,9 +201,9 @@ function ScanRow({
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
-  liveProgress: number;
+  vulnerabilities: Vulnerability[];
 }) {
-  const progress = scan.status === "Running" ? liveProgress : undefined;
+  const progress = scan.progress;
 
   return (
     <>
@@ -308,7 +230,7 @@ function ScanRow({
         </td>
         <td className="px-4 py-3">
           <span className="text-sm font-mono text-foreground">
-            {scan.vulnCount}
+            {scan.vuln_count}
           </span>
         </td>
         <td className="px-4 py-3 min-w-[160px]">
@@ -320,7 +242,7 @@ function ScanRow({
               </span>
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">{scan.date}</span>
+            <span className="text-xs text-muted-foreground">{new Date(scan.created_at).toLocaleString()}</span>
           )}
         </td>
         <td className="px-4 py-3">
@@ -352,7 +274,7 @@ function ScanRow({
         <tr>
           <td colSpan={6} className="p-0">
             <AnimatePresence>
-              <ExpandedDetails scanId={scan.id} />
+              <ExpandedDetails scanId={scan.id} vulnerabilities={vulnerabilities} />
             </AnimatePresence>
           </td>
         </tr>
@@ -365,7 +287,8 @@ function ScanRow({
 function NewScanModal({
   open,
   onClose,
-}: { open: boolean; onClose: () => void }) {
+  onScanStarted,
+}: { open: boolean; onClose: () => void; onScanStarted: () => void }) {
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([
     "OWASP Top 10",
@@ -479,7 +402,19 @@ function NewScanModal({
             Cancel
           </Button>
           <Button
-            onClick={onClose}
+            onClick={async () => {
+              try {
+                await fetch('http://localhost:3001/api/scans', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ target: targetUrl }),
+                });
+                onScanStarted();
+                onClose();
+              } catch (err) {
+                console.error('Failed to start scan', err);
+              }
+            }}
             className="bg-cyan-500 hover:bg-cyan-400 text-black font-semibold glow-cyan transition-smooth"
             data-ocid="scanner.start_scan_button"
           >
@@ -495,48 +430,53 @@ function NewScanModal({
 export default function ScannerPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [liveProgresses, setLiveProgresses] = useState<Record<number, number>>(
-    () =>
-      Object.fromEntries(
-        MOCK_SCANS.filter((s) => s.status === "Running").map((s) => [
-          s.id,
-          s.progress ?? 0,
-        ]),
-      ),
-  );
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [scans, setScans] = useState<ScanEntry[]>([]);
+  const [vulnerabilities, setVulnerabilities] = useState<Record<string, Vulnerability[]>>({});
 
-  // Animate running scan progress bars
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fetchScans = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/scans');
+      const data = await res.json();
+      setScans(data);
+    } catch (err) {
+      console.error('Failed to fetch scans', err);
+    }
+  };
+
+  const fetchScanDetails = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/scans/${id}`);
+      const data = await res.json();
+      setVulnerabilities(prev => ({ ...prev, [id]: data.vulnerabilities }));
+    } catch (err) {
+      console.error('Failed to fetch scan details', err);
+    }
+  };
+
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setLiveProgresses((prev) => {
-        const next = { ...prev };
-        for (const id in next) {
-          next[id] = Math.min(99, next[id] + Math.random() * 0.4);
-        }
-        return next;
-      });
-    }, 600);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    fetchScans();
+    const interval = setInterval(fetchScans, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const tabCounts = {
-    all: MOCK_SCANS.length,
-    critical: MOCK_SCANS.filter((s) => s.severity === "Critical").length,
-    high: MOCK_SCANS.filter((s) => s.severity === "High").length,
-    medium: MOCK_SCANS.filter((s) => s.severity === "Medium").length,
-    low: MOCK_SCANS.filter((s) => s.severity === "Low").length,
+    all: scans.length,
+    critical: scans.filter((s) => s.severity === "Critical").length,
+    high: scans.filter((s) => s.severity === "High").length,
+    medium: scans.filter((s) => s.severity === "Medium").length,
+    low: scans.filter((s) => s.severity === "Low").length,
   };
 
   const filteredScans =
     activeTab === "all"
-      ? MOCK_SCANS
-      : MOCK_SCANS.filter((s) => s.severity.toLowerCase() === activeTab);
+      ? scans
+      : scans.filter((s) => s.severity?.toLowerCase() === activeTab);
 
-  function toggleRow(id: number) {
+  function toggleRow(id: string) {
+    if (expandedRow !== id) {
+      fetchScanDetails(id);
+    }
     setExpandedRow((prev) => (prev === id ? null : id));
   }
 
@@ -580,9 +520,9 @@ export default function ScannerPage() {
         {/* Stats row */}
         <div className="flex items-center gap-6 flex-wrap">
           {[
-            { label: "Total Scans", value: "6", color: "text-foreground" },
-            { label: "In Progress", value: "2", color: "text-cyan-400" },
-            { label: "Critical Findings", value: "3", color: "text-red-400" },
+            { label: "Total Scans", value: scans.length.toString(), color: "text-foreground" },
+            { label: "In Progress", value: scans.filter(s => s.status === "Running").length.toString(), color: "text-cyan-400" },
+            { label: "Critical Findings", value: scans.filter(s => s.severity === "Critical").length.toString(), color: "text-red-400" },
           ].map((stat) => (
             <div key={stat.label} className="flex items-center gap-2">
               <span className={`text-lg font-bold font-mono ${stat.color}`}>
@@ -703,9 +643,7 @@ export default function ScannerPage() {
                           index={i}
                           isExpanded={expandedRow === scan.id}
                           onToggle={() => toggleRow(scan.id)}
-                          liveProgress={Math.round(
-                            liveProgresses[scan.id] ?? scan.progress ?? 0,
-                          )}
+                          vulnerabilities={vulnerabilities[scan.id] || []}
                         />
                       ))
                     )}
@@ -718,7 +656,7 @@ export default function ScannerPage() {
       </motion.div>
 
       {/* Modal */}
-      <NewScanModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewScanModal open={modalOpen} onClose={() => setModalOpen(false)} onScanStarted={fetchScans} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import scannerRouter from './services/vulnerability-scanner/router.js';
 
 dotenv.config();
 
@@ -10,6 +11,7 @@ const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/scans', scannerRouter);
 
 // In-memory storage for demo purposes
 // In a real app, this would be a database

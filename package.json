@@ -21,6 +21,7 @@
     "tsx": "^4.19.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
