@@ -1,0 +1,29 @@
+{
+  "name": "@vulnix/root",
+  "type": "module",
+  "engines": {
+    "node": ">=16.0.0",
+    "pnpm": ">=7.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm -C src/frontend dev",
+    "build": "pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "check": "pnpm -r --if-present run check",
+    "fix": "pnpm -r --if-present run fix",
+    "server": "tsx src/server/index.ts"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.37",
+    "sharp": "^0.34.4",
+    "tsx": "^4.19.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "openai": "^6.37.0"
+  }
+}
