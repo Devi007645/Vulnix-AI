@@ -6,11 +6,9 @@
     "pnpm": ">=7.0.0"
   },
   "scripts": {
-    "dev": "pnpm -C src/frontend dev",
-    "build": "pnpm -r --if-present run build",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "check": "pnpm -r --if-present run check",
-    "fix": "pnpm -r --if-present run fix",
+    "dev": "npm run dev --prefix src/frontend",
+    "build": "npm run build --prefix src/frontend",
+    "typecheck": "npm run typecheck --prefix src/frontend",
     "server": "tsx src/server/index.ts"
   },
   "devDependencies": {
@@ -21,12 +19,12 @@
     "tsx": "^4.19.0"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.105.4",
     "bullmq": "^5.76.8",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
-    "ioredis": "^5.10.1",
-    "openai": "^6.37.0"
+    "ioredis": "^5.10.1"
   }
 }

@@ -52,7 +52,7 @@ export default function AIAssistant() {
   // Check API key configuration
   useEffect(() => {
     if (!actor || isFetching || keyChecked) return;
-    actor.isOpenAIKeyConfigured().then((configured) => {
+    (actor as any).isGeminiKeyConfigured().then((configured: boolean) => {
       setKeyConfigured(configured);
       setKeyChecked(true);
     });
@@ -217,7 +217,7 @@ export default function AIAssistant() {
                     color: "#a78bfa",
                   }}
                 >
-                  Powered by OpenAI
+                  Powered by Gemini
                 </span>
               </div>
               <button
@@ -254,10 +254,10 @@ export default function AIAssistant() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground mb-1">
-                    OpenAI API Key Required
+                    Gemini API Key Required
                   </p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Set your OpenAI API key in Settings to activate the AI
+                    Set your Gemini API key in Settings to activate the AI
                     assistant
                   </p>
                 </div>

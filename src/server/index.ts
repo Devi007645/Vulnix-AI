@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import scannerRouter from './services/vulnerability-scanner/router.js';
 import { startScanWorker } from './workers/scanWorker.js';
 
@@ -17,10 +17,10 @@ app.use('/api/scans', scannerRouter);
 // In-memory storage for demo purposes
 // In a real app, this would be a database
 let chatHistory: any[] = [];
-let openAIKey: string | null = process.env.OPENAI_API_KEY || null;
+let geminiKey: string | null = process.env.GEMINI_API_KEY || null;
 
 app.get('/api/key-configured', (req, res) => {
-  res.json({ configured: !!openAIKey });
+  res.json({ configured: !!geminiKey });
 });
 
 app.post('/api/key', (req, res) => {
@@ -28,7 +28,7 @@ app.post('/api/key', (req, res) => {
   if (!key) {
     return res.status(400).json({ error: 'Key is required' });
   }
-  openAIKey = key;
+  geminiKey = key;
   res.json({ success: true });
 });
 
@@ -56,9 +56,9 @@ app.post('/api/chat', async (req, res) => {
   };
   chatHistory.push(userMsg);
 
-  if (!openAIKey) {
+  if (!geminiKey) {
     // Mock response if no key
-    const mockResponse = `I'm in mock mode because no OpenAI API key is configured. You said: "${prompt}". Please set your API key in Settings to get real AI responses.`;
+    const mockResponse = `I'm in mock mode because no Gemini API key is configured. You said: "${prompt}". Please set your API key in Settings to get real AI responses.`;
     const aiMsg = {
       role: 'assistant',
       content: mockResponse,
@@ -69,17 +69,22 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    const openai = new OpenAI({ apiKey: openAIKey });
-    const completion = await openai.chat.completions.create({
-      messages: [
-        { role: 'system', content: 'You are Vulnix AI, a world-class cybersecurity assistant.' },
-        ...chatHistory.map(m => ({ role: m.role, content: m.content })),
-        { role: 'user', content: prompt }
-      ],
-      model: 'gpt-3.5-turbo',
+    const genAI = new GoogleGenerativeAI(geminiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const chat = model.startChat({
+      history: chatHistory.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      })),
+      generationConfig: {
+        maxOutputTokens: 1000,
+      },
     });
 
-    const aiResponse = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
+    const result = await chat.sendMessage(prompt);
+    const aiResponse = result.response.text();
+
     const aiMsg = {
       role: 'assistant',
       content: aiResponse,
@@ -88,8 +93,8 @@ app.post('/api/chat', async (req, res) => {
     chatHistory.push(aiMsg);
     res.json({ content: aiResponse });
   } catch (error: any) {
-    console.error('OpenAI Error:', error);
-    res.status(500).json({ error: error.message || 'Error calling OpenAI' });
+    console.error('Gemini Error:', error);
+    res.status(500).json({ error: error.message || 'Error calling Gemini' });
   }
 });
 

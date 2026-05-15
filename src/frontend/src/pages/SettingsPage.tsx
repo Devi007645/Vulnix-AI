@@ -548,7 +548,7 @@ const platformKeys = [
 ];
 
 function ApiKeysTab() {
-  const { openAIKey, setOpenAIKey } = useAuthStore();
+  const { geminiKey, setGeminiKey } = useAuthStore();
   const { actor } = useActor(createActor);
   const [keyInput, setKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -559,15 +559,15 @@ function ApiKeysTab() {
       toast.error("Please enter a valid API key");
       return;
     }
-    setOpenAIKey(trimmed);
+    setGeminiKey(trimmed);
     if (actor) {
       try {
-        await actor.setOpenAIKey(trimmed);
+        await (actor as any).setGeminiKey(trimmed);
       } catch {
         // Best-effort backend persist
       }
     }
-    toast.success("OpenAI API key saved successfully");
+    toast.success("Gemini API key saved successfully");
     setKeyInput("");
   };
 
@@ -580,11 +580,11 @@ function ApiKeysTab() {
     toast.success("Key prefix copied");
   };
 
-  const maskedKey = openAIKey ? `sk-...${openAIKey.slice(-6)}` : "";
+  const maskedKey = geminiKey ? `${geminiKey.slice(0, 4)}...${geminiKey.slice(-4)}` : "";
 
   return (
     <motion.div {...fadeIn} className="space-y-6">
-      {/* OpenAI Key */}
+      {/* Gemini Key */}
       <Card className="glass border-border/50">
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -593,7 +593,7 @@ function ApiKeysTab() {
             </div>
             <div>
               <CardTitle className="text-base text-foreground">
-                OpenAI API Key
+                Gemini API Key
               </CardTitle>
               <CardDescription>Powers the Vulnix AI assistant</CardDescription>
             </div>
@@ -604,7 +604,7 @@ function ApiKeysTab() {
             Your API key is used to power the Vulnix AI assistant. It's stored
             securely and never shared. Enter your key to activate AI features.
           </p>
-          {openAIKey && (
+          {geminiKey && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/25">
               <Key className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-mono text-primary">
@@ -620,7 +620,7 @@ function ApiKeysTab() {
               type={showKey ? "text" : "password"}
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="sk-..."
+              placeholder="AIza..."
               className="bg-muted/40 border-border/60 focus:border-primary/60 pr-10 font-mono text-sm"
               data-ocid="apikeys.openai_key_input"
             />
@@ -640,13 +640,13 @@ function ApiKeysTab() {
           </div>
           <div className="flex items-center justify-between">
             <a
-              href="https://platform.openai.com/api-keys"
+              href="https://aistudio.google.com/app/apikey"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline flex items-center gap-1"
               data-ocid="apikeys.openai_link"
             >
-              Get your API key from platform.openai.com
+              Get your API key from Google AI Studio
               <ExternalLink className="w-3 h-3" />
             </a>
             <Button

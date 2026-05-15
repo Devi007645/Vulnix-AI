@@ -218,7 +218,8 @@ function ScanRow({
   index,
   isExpanded,
   onToggle,
-  liveProgress,
+  vulnerabilities,
+  logs = [],
 }: {
   scan: ScanEntry;
   index: number;

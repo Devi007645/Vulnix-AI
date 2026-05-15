@@ -4,10 +4,10 @@ import { persist } from "zustand/middleware";
 interface AuthState {
   isLoggedIn: boolean;
   userEmail: string;
-  openAIKey: string;
+  geminiKey: string;
   login: (email: string) => void;
   logout: () => void;
-  setOpenAIKey: (key: string) => void;
+  setGeminiKey: (key: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -15,16 +15,17 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       isLoggedIn: false,
       userEmail: "",
-      openAIKey: "",
+      geminiKey: "",
       login: (email: string) => set({ isLoggedIn: true, userEmail: email }),
-      logout: () => set({ isLoggedIn: false, userEmail: "", openAIKey: "" }),
-      setOpenAIKey: (key: string) => set({ openAIKey: key }),
+      logout: () => set({ isLoggedIn: false, userEmail: "", geminiKey: "" }),
+      setGeminiKey: (key: string) => set({ geminiKey: key }),
     }),
     {
       name: "vulnix-auth",
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         userEmail: state.userEmail,
+        geminiKey: state.geminiKey,
       }),
     },
   ),

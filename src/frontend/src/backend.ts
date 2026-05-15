@@ -10,10 +10,10 @@ export interface backendInterface {
     chat(prompt: string): Promise<string>;
     clearChatHistory(): Promise<void>;
     getChatHistory(): Promise<Array<ChatMessage>>;
-    getOpenAIKey(): Promise<string | null>;
-    isOpenAIKeyConfigured(): Promise<boolean>;
+    getGeminiKey(): Promise<string | null>;
+    isGeminiKeyConfigured(): Promise<boolean>;
     saveChatMessage(role: string, content: string): Promise<void>;
-    setOpenAIKey(key: string): Promise<void>;
+    setGeminiKey(key: string): Promise<void>;
 }
 
 export class Backend implements backendInterface {
@@ -39,23 +39,20 @@ export class Backend implements backendInterface {
         return await response.json();
     }
 
-    async getOpenAIKey(): Promise<string | null> {
-        // We don't return the key for security, just like the Motoko version
+    async getGeminiKey(): Promise<string | null> {
         return null;
     }
 
-    async isOpenAIKeyConfigured(): Promise<boolean> {
+    async isGeminiKeyConfigured(): Promise<boolean> {
         const response = await fetch(`${this.baseUrl}/key-configured`);
         const data = await response.json();
         return data.configured;
     }
 
     async saveChatMessage(role: string, content: string): Promise<void> {
-        // In this implementation, the server handles saving history during chat
-        // but we can implement it if needed for external sync
     }
 
-    async setOpenAIKey(key: string): Promise<void> {
+    async setGeminiKey(key: string): Promise<void> {
         await fetch(`${this.baseUrl}/key`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
