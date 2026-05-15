@@ -191,7 +191,7 @@ const severityConfig: Record<
   success: {
     dot: "bg-emerald-500",
     badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    label: "Info",
+    label: "Success",
   },
   info: {
     dot: "bg-cyan-500",

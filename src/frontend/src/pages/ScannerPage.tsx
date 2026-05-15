@@ -462,7 +462,7 @@ export default function ScannerPage() {
 
   const fetchScans = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/scans');
+      const res = await fetch('/api/scans');
       const data = await res.json();
       setScans(data);
     } catch (err) {
@@ -472,12 +472,10 @@ export default function ScannerPage() {
 
   const fetchScanDetails = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/scans/${id}`);
+      const res = await fetch(`/api/scans/${id}`);
       const data = await res.json();
-      setVulnerabilities(prev => ({ ...prev, [id]: data.vulnerabilities }));
-
-      const { data: logData } = await supabase.from('scan_logs').select('*').eq('scan_id', id).order('created_at', { ascending: true });
-      if (logData) setLogs(prev => ({ ...prev, [id]: logData }));
+      setVulnerabilities(prev => ({ ...prev, [id]: data.vulnerabilities || [] }));
+      setLogs(prev => ({ ...prev, [id]: data.logs || [] }));
     } catch (err) {
       console.error('Failed to fetch scan details', err);
     }
@@ -511,16 +509,16 @@ export default function ScannerPage() {
 
   const tabCounts = {
     all: scans.length,
-    critical: scans.filter((s) => s.severity === "Critical").length,
-    high: scans.filter((s) => s.severity === "High").length,
-    medium: scans.filter((s) => s.severity === "Medium").length,
-    low: scans.filter((s) => s.severity === "Low").length,
+    critical: scans.filter((s) => s.severity?.toLowerCase() === "critical").length,
+    high: scans.filter((s) => s.severity?.toLowerCase() === "high").length,
+    medium: scans.filter((s) => s.severity?.toLowerCase() === "medium").length,
+    low: scans.filter((s) => s.severity?.toLowerCase() === "low").length,
   };
 
   const filteredScans =
     activeTab === "all"
       ? scans
-      : scans.filter((s) => s.severity?.toLowerCase() === activeTab);
+      : scans.filter((s) => (s.severity?.toLowerCase() || 'unrated') === activeTab);
 
   function toggleRow(id: string) {
     if (expandedRow !== id) {

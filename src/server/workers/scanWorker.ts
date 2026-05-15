@@ -25,12 +25,28 @@ export const processScanJob = async (data: any, jobId: string) => {
       await updateScanStatus(scanId, 'Complete', 100, 0);
     }
 
-    const { count } = await supabase
+    const { data: vulnerabilities } = await supabase
       .from('vulnerabilities')
-      .select('*', { count: 'exact', head: true })
+      .select('severity')
       .eq('scan_id', scanId);
 
-    await updateScanStatus(scanId, 'Complete', 100, count || 0);
+    let maxSeverity = 'Low';
+    if (vulnerabilities && vulnerabilities.length > 0) {
+      const severityMap: Record<string, number> = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+      let maxScore = 0;
+      
+      for (const v of vulnerabilities) {
+        const score = severityMap[v.severity] || 0;
+        if (score > maxScore) {
+          maxScore = score;
+          maxSeverity = v.severity;
+        }
+      }
+    } else {
+      maxSeverity = 'Low'; // Or null if no vulns
+    }
+
+    await updateScanStatus(scanId, 'Complete', 100, vulnerabilities?.length || 0, maxSeverity);
     await updateJobStatus(scanId, jobId, 'completed');
     await log(scanId, `Scan completed successfully.`);
 
@@ -79,10 +95,11 @@ async function updateJobStatus(scanId: string, jobId: string, status: string, er
   await supabase.from('scan_jobs').update({ status, error }).eq('job_id', jobId);
 }
 
-async function updateScanStatus(scanId: string, status: string, progress: number | null, vuln_count?: number) {
+async function updateScanStatus(scanId: string, status: string, progress: number | null, vuln_count?: number, severity?: string) {
   const updateData: any = { status };
   if (progress !== null) updateData.progress = progress;
   if (vuln_count !== undefined) updateData.vuln_count = vuln_count;
+  if (severity !== undefined) updateData.severity = severity;
   await supabase.from('scans').update(updateData).eq('id', scanId);
 }
 
