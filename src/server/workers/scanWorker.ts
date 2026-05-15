@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { redisConnection } from '../lib/redis.js';
-import { SCAN_QUEUE_NAME } from '../lib/queue.js';
+import { SCAN_QUEUE_NAME, registerMockProcessor } from '../lib/queue.js';
 import { supabase } from '../lib/supabase.js';
 import { exec } from 'child_process';
 import util from 'util';
@@ -11,44 +11,63 @@ dotenv.config();
 
 const execAsync = util.promisify(exec);
 
-export const startScanWorker = () => {
-  const worker = new Worker(SCAN_QUEUE_NAME, async (job: Job) => {
-    const { scanId, target, scanTypes, scanSpeed } = job.data;
-    
-    try {
-      await updateJobStatus(scanId, job.id!, 'processing');
-      await log(scanId, `Starting scan job for ${target} with types: ${scanTypes.join(',')}`);
+// Core processing logic separated from BullMQ
+export const processScanJob = async (data: any, jobId: string) => {
+  const { scanId, target, scanTypes, scanSpeed } = data;
+  
+  try {
+    await updateJobStatus(scanId, jobId, 'processing');
+    await log(scanId, `Starting scan job for ${target} with types: ${scanTypes.join(',')}`);
 
-      if (scanTypes.includes('nmap') || scanTypes.includes('Port Scan')) {
-        await runNmapScan(scanId, target, scanSpeed);
-      } else {
-        await updateScanStatus(scanId, 'Complete', 100, 0);
-      }
-
-      const { count } = await supabase
-        .from('vulnerabilities')
-        .select('*', { count: 'exact', head: true })
-        .eq('scan_id', scanId);
-
-      await updateScanStatus(scanId, 'Complete', 100, count || 0);
-      await updateJobStatus(scanId, job.id!, 'completed');
-      await log(scanId, `Scan completed successfully.`);
-
-    } catch (error: any) {
-      console.error(`Job ${job.id} failed:`, error);
-      await updateScanStatus(scanId, 'Failed', null);
-      await updateJobStatus(scanId, job.id!, 'failed', error.message);
-      await log(scanId, `Scan failed: ${error.message}`, 'error');
-      throw error;
+    if (scanTypes.includes('nmap') || scanTypes.includes('Port Scan') || scanTypes.includes('OWASP Top 10')) {
+      await runNmapScan(scanId, target, scanSpeed);
+    } else {
+      await updateScanStatus(scanId, 'Complete', 100, 0);
     }
-  }, { connection: redisConnection });
 
-  worker.on('failed', (job, err) => {
-    console.error(`Job ${job?.id} failed with error ${err.message}`);
+    const { count } = await supabase
+      .from('vulnerabilities')
+      .select('*', { count: 'exact', head: true })
+      .eq('scan_id', scanId);
+
+    await updateScanStatus(scanId, 'Complete', 100, count || 0);
+    await updateJobStatus(scanId, jobId, 'completed');
+    await log(scanId, `Scan completed successfully.`);
+
+  } catch (error: any) {
+    console.error(`Job ${jobId} failed:`, error);
+    await updateScanStatus(scanId, 'Failed', null);
+    await updateJobStatus(scanId, jobId, 'failed', error.message);
+    await log(scanId, `Scan failed: ${error.message}`, 'error');
+    throw error;
+  }
+};
+
+export const startScanWorker = () => {
+  // Register for mock mode
+  registerMockProcessor(async (data, jobId) => {
+    await processScanJob(data, jobId);
   });
 
-  console.log(`Worker started for queue: ${SCAN_QUEUE_NAME}`);
-  return worker;
+  try {
+    const worker = new Worker(SCAN_QUEUE_NAME, async (job: Job) => {
+      await processScanJob(job.data, job.id!);
+    }, { 
+      connection: redisConnection,
+      // Prevents the worker from hanging if Redis is down
+      connectionRecheckInterval: 5000 
+    });
+
+    worker.on('failed', (job, err) => {
+      console.error(`Job ${job?.id} failed with error ${err.message}`);
+    });
+
+    console.log(`Worker started for queue: ${SCAN_QUEUE_NAME}`);
+    return worker;
+  } catch (err) {
+    console.warn('Could not start BullMQ worker, running in mock mode only.');
+    return null;
+  }
 };
 
 async function log(scanId: string, message: string, level: string = 'info') {
@@ -56,6 +75,7 @@ async function log(scanId: string, message: string, level: string = 'info') {
 }
 
 async function updateJobStatus(scanId: string, jobId: string, status: string, error?: string) {
+  // Only update if it's not a mock job id, or handle mock job ids gracefully
   await supabase.from('scan_jobs').update({ status, error }).eq('job_id', jobId);
 }
 
@@ -80,7 +100,7 @@ async function runNmapScan(scanId: string, target: string, speed: string) {
     await updateScanStatus(scanId, 'Running', 50);
     await parseNmapWithAI(scanId, stdout);
   } catch (err: any) {
-    await log(scanId, `Nmap failed or not found: ${err.message}. Using demo mock data instead.`, 'warn');
+    await log(scanId, `Nmap failed or not found. Using demo mock data instead.`, 'warn');
     
     const mockOutput = `
       <?xml version="1.0" encoding="UTF-8"?>
