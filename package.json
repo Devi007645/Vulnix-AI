@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.105.4",
     "bullmq": "^5.76.8",
     "cors": "^2.8.6",

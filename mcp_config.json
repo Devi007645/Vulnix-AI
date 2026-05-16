@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server"],
+      "env": {
+        "SUPABASE_URL": "https://ohlvpwpnnsstxsqrcbbm.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9obHZwd3BubnNzdHhzcXJjYmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NzE5OTEsImV4cCI6MjA5NDM0Nzk5MX0.a2Q7m-w7Jns1jeueM0K07ti-dLkwsXUkzMAiu9A2GI0"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": ""
+      }
+    },
+    "pinecone": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-pinecone"],
+      "env": {
+        "PINECONE_API_KEY": ""
+      }
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@swartdraak/docker-mcp-server"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "args_extra": ["./logs", "./reports"]
+    }
+  }
+}

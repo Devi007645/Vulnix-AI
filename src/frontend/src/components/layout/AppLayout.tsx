@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-router";
 import {
   Bell,
+  Bot,
   ChevronLeft,
   ChevronRight,
   Code2,
@@ -42,6 +43,7 @@ const navItems = [
   { path: "/app/scanner", label: "Vulnerability Scanner", icon: Shield },
   { path: "/app/bug-bounty", label: "Bug Bounty AI", icon: Target },
   { path: "/app/code-review", label: "Code Review", icon: Code2 },
+  { path: "/app/agents", label: "AI Security Agents", icon: Bot },
   { path: "/app/learning", label: "Learning Arena", icon: GraduationCap },
   {
     path: "/app/scam-detection",
@@ -57,6 +59,7 @@ const pageTitles: Record<string, string> = {
   "/app/scanner": "Vulnerability Scanner",
   "/app/bug-bounty": "Bug Bounty AI",
   "/app/code-review": "Secure Code Review",
+  "/app/agents": "AI Security Agents",
   "/app/learning": "Learning Arena",
   "/app/scam-detection": "Scam Detection",
   "/app/billing": "Billing",

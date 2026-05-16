@@ -3,6 +3,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import BillingPageComponent from "@/pages/BillingPage";
 import BugBountyPage from "@/pages/BugBountyPage";
 import CodeReviewPage from "@/pages/CodeReviewPage";
+import AgentPage from "@/pages/AgentPage";
 import LandingPage from "@/pages/LandingPage";
 import LearningPage from "@/pages/LearningPage";
 import LoginPageComponent from "@/pages/LoginPage";
@@ -112,6 +113,12 @@ const codeReviewRoute = createRoute({
   component: CodeReviewPage,
 });
 
+const agentsRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/app/agents",
+  component: AgentPage,
+});
+
 const learningRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: "/app/learning",
@@ -144,6 +151,7 @@ const routeTree = rootRoute.addChildren([
     scannerRoute,
     bugBountyRoute,
     codeReviewRoute,
+    agentsRoute,
     learningRoute,
     scamDetectionRoute,
     billingRoute,

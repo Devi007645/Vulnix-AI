@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import scannerRouter from './services/vulnerability-scanner/router.js';
 import { startScanWorker } from './workers/scanWorker.js';
+import { orchestrator } from './orchestrator/AgentOrchestrator.js';
 
 dotenv.config();
 
@@ -13,6 +14,22 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use('/api/scans', scannerRouter);
+
+// AI Agent Orchestration Endpoints
+app.post('/api/agents/run', async (req, res) => {
+  const { workflow, target, scanId } = req.body;
+  if (!workflow || !target) {
+    return res.status(400).json({ error: 'Workflow and target are required' });
+  }
+
+  try {
+    const result = await orchestrator.runWorkflow(workflow, target, scanId || `agent-${Date.now()}`);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Orchestrator Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // In-memory storage for demo purposes
 // In a real app, this would be a database
