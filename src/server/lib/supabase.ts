@@ -10,4 +10,16 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase credentials missing. Database operations will fail.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+import WebSocket from 'ws';
+
+// @ts-ignore
+global.WebSocket = WebSocket;
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false
+  },
+  realtime: {
+    websocket: WebSocket
+  }
+});

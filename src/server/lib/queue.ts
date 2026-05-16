@@ -7,9 +7,9 @@ let internalQueue: any;
 let isMock = false;
 
 // We'll store a callback to run the scan directly in mock mode
-let mockProcessor: ((data: any) => Promise<void>) | null = null;
+let mockProcessor: ((data: any, jobId: string) => Promise<void>) | null = null;
 
-export const registerMockProcessor = (processor: (data: any) => Promise<void>) => {
+export const registerMockProcessor = (processor: (data: any, jobId: string) => Promise<void>) => {
   mockProcessor = processor;
 };
 
@@ -34,7 +34,7 @@ try {
 
 // Wrap the queue to handle mock mode
 export const scanQueue = {
-  add: async (name: string, data: any) => {
+  add: async (name: string, data: any): Promise<any> => {
     if (isMock || !internalQueue) {
       console.log(`[MockQueue] Adding job ${name}`, data);
       const jobId = 'mock-job-' + Date.now();
@@ -53,7 +53,7 @@ export const scanQueue = {
 
     try {
       return await internalQueue.add(name, data);
-    } catch (err) {
+    } catch (err: any) {
       console.warn('BullMQ add failed, falling back to mock:', err);
       isMock = true;
       return scanQueue.add(name, data); // Retry with mock

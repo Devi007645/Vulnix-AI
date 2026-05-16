@@ -69,9 +69,7 @@ export const startScanWorker = () => {
     const worker = new Worker(SCAN_QUEUE_NAME, async (job: Job) => {
       await processScanJob(job.data, job.id!);
     }, { 
-      connection: redisConnection,
-      // Prevents the worker from hanging if Redis is down
-      connectionRecheckInterval: 5000 
+      connection: redisConnection
     });
 
     worker.on('failed', (job, err) => {

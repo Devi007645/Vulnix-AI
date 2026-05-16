@@ -13,6 +13,10 @@ const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`, req.body);
+  next();
+});
 app.use('/api/scans', scannerRouter);
 
 // AI Agent Orchestration Endpoints

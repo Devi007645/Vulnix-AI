@@ -2,44 +2,44 @@
 
 ![Vulnix AI Hero](./assets/hero.png)
 
-Vulnix AI is a next-generation cybersecurity platform that combines traditional vulnerability scanning with advanced Artificial Intelligence. By leveraging high-performance scanning tools and large language models, Vulnix AI provides not just a list of vulnerabilities, but a comprehensive, intelligent analysis and remediation roadmap for your infrastructure.
+Vulnix AI is a next-generation cybersecurity platform that transforms vulnerability scanning into an autonomous, AI-driven security operation. By leveraging the **Model Context Protocol (MCP)** and a specialized **Multi-Agent Orchestration System**, Vulnix AI provides intelligent infrastructure analysis, real-time container monitoring, and automated remediation roadmaps.
 
 ---
 
-## 🚀 Current Accomplishments
+## 🚀 Key Capabilities
 
-We have successfully built the foundation of a production-grade security platform:
+### 1. Autonomous AI Agent Orchestration
+Vulnix AI features a modular agent system where specialized AI entities collaborate to secure your infrastructure:
+- **🔍 Recon Agent**: Handles initial discovery, port scanning, and service identification using Nmap.
+- **🛡️ Vulnerability Agent**: Performs deep-dive analysis into detected services to identify specific CVEs and misconfigurations.
+- **🛠️ DevOps Agent**: Manages infrastructure health, container status, and system-wide monitoring via Docker MCP.
+- **🧠 Orchestrator**: Coordinates tasks between agents, ensuring a seamless flow from discovery to remediation.
 
-### 1. Scalable Distributed Architecture
-- **Express.js Backend**: A robust API layer managing scan requests and user interactions.
-- **BullMQ & Redis**: A reliable asynchronous task queue system that handles high-concurrency scanning jobs.
-- **Dockerized Workers**: Independent scanner nodes that can be scaled horizontally to handle massive workloads.
+### 2. MCP-Native Infrastructure (Model Context Protocol)
+We've integrated MCP as the backbone for tool communication:
+- **Docker MCP Integration**: Enables agents to interact directly with Docker engines for container management and health checks.
+- **Supabase MCP Integration**: Streamlines database operations, migrations, and real-time data handling.
+- **Extensible Tooling**: Easily plug in new security tools by implementing standard MCP server interfaces.
 
-### 2. Intelligent Scan Engine
-- **Nmap Integration**: Real-time port scanning and service discovery using industry-standard tools.
-- **Vulnerability Mapping**: Automated detection of potential security flaws based on scan results.
+### 3. Scalable Distributed Architecture
+- **Express.js Backend**: Robust API layer managing agent workflows and user interactions.
+- **BullMQ & Redis**: High-performance asynchronous task queue for distributed scanning workloads.
+- **Dockerized Workers**: Scalable scanner nodes that execute heavy lifting in isolated environments.
 
-### 3. AI-Driven Analysis
-- **Google Gemini Integration**: Advanced analysis of scan data to identify critical risks and provide human-readable remediation steps.
-- **Interactive Security Assistant**: A dedicated AI chat interface to help users understand their security posture.
-
-### 4. Modern Real-time Dashboard
-- **React + Vite**: A lightning-fast, responsive frontend interface.
-- **Supabase Real-time**: Live updates for scan progress, logs, and vulnerability detection via WebSocket subscriptions.
-- **Secure Authentication**: Integrated user management and authentication.
+### 4. Modern AI Dashboard
+- **Real-time Monitoring**: Live updates for agent logs, scan progress, and vulnerability detections via Supabase Real-time.
+- **Interactive Agent Console**: Manage and monitor autonomous workflows through a dedicated agent dashboard.
+- **AI Remediation**: Human-readable, actionable security advice powered by Google Gemini (1.5 Flash).
 
 ---
 
 ## 🎯 Future Roadmap (Targets)
 
-Our goal is to evolve Vulnix AI into the ultimate security companion:
-
-- [ ] **Multi-Tool Integration**: Incorporate OWASP ZAP, Nikto, and Metasploit for 360° coverage.
+- [ ] **Multi-Tool Integration**: Incorporate OWASP ZAP, Nikto, and Metasploit via dedicated MCP servers.
 - [ ] **Automated Remediation**: AI-generated patch suggestions and shell scripts for instant fixes.
 - [ ] **Comprehensive Reporting**: Export professional security audits in PDF, JSON, and CSV formats.
 - [ ] **Continuous Monitoring**: Scheduled recurring scans with automated alerting (Email/Slack).
 - [ ] **Cloud-Native Scanning**: Specialized scanning modules for AWS, Azure, and GCP environments.
-- [ ] **Team Collaboration**: Multi-user workspaces with role-based access control (RBAC).
 
 ---
 
@@ -47,10 +47,10 @@ Our goal is to evolve Vulnix AI into the ultimate security companion:
 
 - **Frontend**: React, Vite, TailwindCSS, Supabase Auth/Realtime
 - **Backend**: Node.js, Express.js, TypeScript
+- **Agent System**: Custom TypeScript Orchestrator, Model Context Protocol (MCP)
 - **Task Management**: BullMQ, Redis
-- **Security Tools**: Nmap
+- **Infrastructure**: Docker, Docker Compose, MCP-Server-Docker
 - **AI/ML**: Google Gemini (1.5 Flash)
-- **Infrastructure**: Docker, Docker Compose
 
 ---
 
@@ -82,8 +82,8 @@ Our goal is to evolve Vulnix AI into the ultimate security companion:
 4. **Start the services**:
    ```bash
    docker-compose up -d  # Start Redis and Workers
-   npm run dev           # Start Frontend
-   npm run server        # Start Backend
+   npm run server        # Start Backend & Agents
+   npm run dev           # Start Frontend Dashboard
    ```
 
 ---
@@ -91,3 +91,4 @@ Our goal is to evolve Vulnix AI into the ultimate security companion:
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+

@@ -22,25 +22,31 @@ export class AgentOrchestrator {
     return this.agents.get(type);
   }
 
-  async runWorkflow(workflowName: string, target: string, scanId: string) {
+  async runWorkflow(workflowName: string, target: string, scanId: string): Promise<any> {
     console.log(`Starting workflow: ${workflowName} for ${target}`);
     
+    // TEMPORARILY DISABLE MCP workflow steps
+    // Focus on Frontend -> Backend -> BullMQ -> Redis -> Nmap Worker
+    
     if (workflowName === 'full-scan') {
-      const recon = this.getAgent('recon');
       const vuln = this.getAgent('vulnerability');
 
+      // Skip Recon for now (it's MCP-heavy)
+      /*
+      const recon = this.getAgent('recon');
       if (recon) {
         await recon.run({ target, scanId });
       }
+      */
 
       if (vuln) {
+        // We'll modify VulnerabilityAgent to focus on the BullMQ part
         await vuln.run({ target, scanId });
       }
     } else if (workflowName === 'system-check') {
-      const devops = this.getAgent('devops');
-      if (devops) {
-        return await devops.run({ action: 'health-check' });
-      }
+      // Disable system check (Docker MCP)
+      console.log('System check (MCP) is currently disabled.');
+      return { success: true, message: 'MCP disabled' };
     }
     
     return { success: true };

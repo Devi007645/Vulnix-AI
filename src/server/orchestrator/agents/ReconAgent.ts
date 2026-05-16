@@ -22,7 +22,7 @@ export class ReconAgent extends BaseAgent {
       });
       
       await this.log(scanId, `Found ${searchResult.content?.length || 0} potential subdomains/endpoints.`);
-    } catch (err) {
+    } catch (err: any) {
       await this.log(scanId, `Brave Search failed: ${err.message}`, 'warn');
     }
 
@@ -34,7 +34,7 @@ export class ReconAgent extends BaseAgent {
       const screenshot = await this.callTool('playwright', 'screenshot', { path: `reports/${scanId}_recon.png` });
       
       await this.log(scanId, `Reconnaissance screenshot captured.`);
-    } catch (err) {
+    } catch (err: any) {
       await this.log(scanId, `Playwright crawl failed: ${err.message}`, 'warn');
     }
 

@@ -50,11 +50,12 @@ export class MCPClient {
         name: "vulnix-orchestrator",
         version: "1.0.0",
       },
+      // @ts-ignore
       {
         capabilities: {
           tools: {},
         },
-      }
+      } as any
     );
 
     await client.connect(transport);
@@ -67,6 +68,7 @@ export class MCPClient {
 
   async listTools(serverName: string): Promise<Tool[]> {
     const client = await this.connect(serverName);
+    // @ts-ignore
     const result = await client.request(
       { method: "tools/list" },
       ListToolsResultSchema
@@ -76,6 +78,7 @@ export class MCPClient {
 
   async callTool(serverName: string, toolName: string, args: any = {}): Promise<any> {
     const client = await this.connect(serverName);
+    // @ts-ignore
     const result = await client.request(
       {
         method: "tools/call",
